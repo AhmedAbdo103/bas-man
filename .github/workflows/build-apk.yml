@@ -38,8 +38,20 @@ jobs:
             cp sw.js www/
           fi
 
+      - name: Prepare app icons
+        run: |
+          mkdir -p assets
+          cp icon.png assets/icon-only.png
+          cp icon.png assets/splash.png
+
+      - name: Install Capacitor Assets
+        run: npm install --no-save @capacitor/assets
+
       - name: Add Android platform
         run: npx cap add android
+
+      - name: Generate Android icons
+        run: npx capacitor-assets generate --android
 
       - name: Sync Android
         run: npx cap sync android
