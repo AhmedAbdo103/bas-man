@@ -1,0 +1,6 @@
+{
+  "appId": "com.basman.app",
+  "appName": "باص مان",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
