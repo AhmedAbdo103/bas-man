@@ -33,16 +33,14 @@ jobs:
         run: |
           mkdir -p www
           cp index.html manifest.webmanifest icon*.png www/
-
           if [ -f sw.js ]; then
             cp sw.js www/
           fi
 
-      - name: Prepare app icons
+      - name: Prepare app logo
         run: |
           mkdir -p assets
-          cp icon.png assets/icon-only.png
-          cp icon.png assets/splash.png
+          cp icon.png assets/logo.png
 
       - name: Install Capacitor Assets
         run: npm install --no-save @capacitor/assets
@@ -50,8 +48,9 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Generate Android icons
-        run: npx capacitor-assets generate --android
+      - name: Generate Android app icon
+        run: |
+          npx capacitor-assets generate --android --iconBackgroundColor '#10243A'
 
       - name: Sync Android
         run: npx cap sync android
@@ -60,6 +59,7 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
+          ./gradlew clean
           ./gradlew assembleDebug
 
       - name: Upload APK
