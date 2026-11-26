@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>باص مان | BasMan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #090A0F;
+      --bg-card: rgba(20, 23, 33, 0.78);
+      --bg-input: #141824;
+      --bg-dock: rgba(15, 18, 26, 0.92);
+      --text-main: #F8FAFC;
+      --text-muted: #8B95A5;
+      --gold: #E6C26C;
+      --gold-rich: #C89D3C;
+      --border-gold: rgba(230, 194, 108, 0.24);
+      --grid-line: rgba(230, 194, 108, 0.035);
+    }
+    body.light-mode {
+      --bg-base: #F6F4EF;
+      --bg-card: rgba(255, 255, 255, 0.92);
+      --bg-input: #EFECE4;
+      --bg-dock: rgba(255, 255, 255, 0.95);
+      --text-main: #14171F;
+      --text-muted: #5F6775;
+      --gold: #B88924;
+      --gold-rich: #966D15;
+      --border-gold: rgba(184, 137, 36, 0.28);
+      --grid-line: rgba(184, 137, 36, 0.06);
+    }
+    * {
+      font-family: 'Cairo', sans-serif;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: var(--bg-base);
+      background-image:
+        radial-gradient(circle at 50% 0%, rgba(230, 194, 108, 0.11), transparent 50%),
+        linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+      background-size: 100% 100%, 28px 28px, 28px 28px;
+      color: var(--text-main);
+      transition: background-color 0.35s ease, color 0.35s ease;
+      overflow-x: hidden;
+    }
+    .num { font-variant-numeric: tabular-nums; }
+
+    .cockpit-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--border-gold);
+      border-radius: 22px;
+      box-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.5);
+      transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.35s ease;
+    }
+    .field-input {
+      background-color: var(--bg-input);
+      color: var(--text-main);
+      border: 1px solid var(--border-gold);
+      border-radius: 14px;
+      padding: 11px 14px;
+      width: 100%;
+      font-size: 13.5px;
+      font-weight: 600;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field-input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(230, 194, 108, 0.16);
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #F3D999 0%, #E6C26C 50%, #B88924 100%);
+      color: #090A0F;
+      font-weight: 800;
+      border-radius: 14px;
+      box-shadow: 0 8px 22px -6px rgba(230, 194, 108, 0.45);
+      transition: transform 0.16s ease;
+    }
+    .btn-gold:active { transform: scale(0.97); }
+
+    .btn-outline-gold {
+      background: rgba(230, 194, 108, 0.08);
+      border: 1px solid var(--border-gold);
+      color: var(--gold);
+      font-weight: 700;
+      border-radius: 14px;
+      transition: transform 0.16s ease, background 0.16s ease;
+    }
+    .btn-outline-gold:active { transform: scale(0.97); }
+
+    @keyframes spinOrbit { to { transform: rotate(360deg); } }
+    @keyframes floatBus { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+    @keyframes fillLine { from { width: 0%; } to { width: 100%; } }
+    .orbit-ring { animation: spinOrbit 14s linear infinite; }
+    .bus-float { animation: floatBus 2.3s ease-in-out infinite; }
+    .splash-progress { animation: fillLine 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+    .view-panel { display: none; animation: slideFade 0.26s cubic-bezier(0.16, 1, 0.3, 1); }
+    .view-panel.active { display: block; }
+    @keyframes slideFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(230, 194, 108, 0.3); border-radius: 8px; }
+  </style>
+</head>
+<body class="pb-28 select-none">
+
+  <!-- ==================== شاشة الترحيب ==================== -->
+  <div id="splash-screen" class="fixed inset-0 z-50 bg-[#090A0F] flex flex-col items-center justify-center p-6 transition-opacity duration-500">
+    <div class="relative w-36 h-36 flex items-center justify-center mb-5">
+      <svg class="orbit-ring absolute inset-0 w-full h-full" viewBox="0 0 140 140" fill="none">
+        <circle cx="70" cy="70" r="65" stroke="url(#goldOrbit)" stroke-width="1.6" stroke-dasharray="12 6"/>
+        <circle cx="70" cy="70" r="58" stroke="rgba(230,194,108,0.25)" stroke-width="1"/>
+        <defs>
+          <linearGradient id="goldOrbit" x1="0" y1="0" x2="140" y2="140" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#F3D999"/>
+            <stop offset="0.55" stop-color="#E6C26C"/>
+            <stop offset="1" stop-color="#090A0F"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="w-28 h-28 rounded-full bg-gradient-to-b from-[#171B26] to-[#0B0D14] border border-[#E6C26C]/50 flex items-center justify-center shadow-2xl">
+        <svg class="bus-float w-20 h-20" viewBox="0 0 100 100" fill="none">
+          <path d="M29 23H71M34 19H66M39 19V23M50 19V23M61 19V23" stroke="#F3D999" stroke-width="2" stroke-linecap="round"/>
+          <rect x="22" y="24" width="56" height="49" rx="11" fill="#F8FAFC" stroke="#E6C26C" stroke-width="2"/>
+          <path d="M27 32C27 30.3431 28.3431 29 30 29H70C71.6569 29 73 30.3431 73 32V46H27V32Z" fill="#0F172A"/>
+          <path d="M32 32L44 43M40 32L48 40" stroke="rgba(243,217,153,0.35)" stroke-width="1.8" stroke-linecap="round"/>
+          <rect x="37" y="52" width="26" height="6" rx="2.5" fill="#CBD5E1"/>
+          <circle cx="50" cy="55" r="2.2" fill="#E6C26C"/>
+          <rect x="26" y="52" width="8" height="6" rx="2" fill="#FDE047" stroke="#E6C26C" stroke-width="0.8"/>
+          <rect x="66" y="52" width="8" height="6" rx="2" fill="#FDE047" stroke="#E6C26C" stroke-width="0.8"/>
+          <rect x="41" y="62" width="18" height="5.5" rx="1.5" fill="#E6C26C"/>
+          <rect x="26" y="73" width="9" height="7" rx="2.5" fill="#090A0F"/>
+          <rect x="65" y="73" width="9" height="7" rx="2.5" fill="#090A0F"/>
+          <path d="M14 83H86" stroke="#E6C26C" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+    <h1 class="text-3xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-l from-[#F3D999] via-[#E6C26C] to-[#B88924]">
+      باص مان <span class="text-white/90 text-xl font-bold">BasMan</span>
+    </h1>
+    <p class="mt-2 text-xs font-bold text-[#F3D999]">«الحلم شاص والواقع فوق باص»</p>
+    <p class="mt-2 text-[10px] text-white/50">صُمم بواسطة م/ أحمد عبده</p>
+    <div class="w-40 h-1 bg-white/10 rounded-full overflow-hidden mt-6">
+      <div class="splash-progress h-full bg-gradient-to-l from-[#F3D999] to-[#E6C26C]"></div>
+    </div>
+  </div>
+
+  <!-- ==================== الشريط العلوي العائم ==================== -->
+  <header class="sticky top-0 z-40 px-3 pt-2.5 pb-1">
+    <div id="top-bar" class="max-w-2xl mx-auto cockpit-card px-3.5 py-2.5 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <button id="btn-back" onclick="App.navigate('dashboard')" class="hidden w-9 h-9 rounded-xl bg-[#E6C26C]/10 border border-[#E6C26C]/35 text-[#E6C26C] flex items-center justify-center shrink-0 active:scale-95 transition" aria-label="رجوع">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1C2130] to-[#0B0D14] border border-[#E6C26C]/50 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#E6C26C" stroke-width="1.9">
+            <rect x="4" y="4" width="16" height="14" rx="3.5" fill="rgba(230,194,108,0.12)"/>
+            <path d="M4 11h16M8 4v7M16 4v7M7 18v2M17 18v2" stroke-linecap="round"/>
+            <circle cx="7.5" cy="14.5" r="1" fill="#F3D999"/>
+            <circle cx="16.5" cy="14.5" r="1" fill="#F3D999"/>
+          </svg>
+        </div>
+
+        <div class="min-w-0">
+          <button onclick="App.openNameModal()" class="flex items-center gap-1 text-[11px] font-bold text-[#E6C26C] hover:opacity-80 truncate">
+            <span id="greeting-text">صباح الخير، كابتن الباص</span>
+            <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+          </button>
+          <h2 id="page-heading" class="text-sm font-extrabold truncate">الرئيسية</h2>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <input type="month" id="month-picker" onchange="App.changeMonth(this.value)" class="bg-[#141824] text-[#E6C26C] border border-[#E6C26C]/35 rounded-xl px-2.5 py-1.5 text-xs font-bold num focus:outline-none" />
+        <button onclick="App.toggleTheme()" class="w-9 h-9 rounded-xl bg-[#E6C26C]/10 border border-[#E6C26C]/35 text-[#E6C26C] flex items-center justify-center active:scale-95 transition" aria-label="المظهر">
+          <svg id="icon-sun" class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg id="icon-moon" class="w-4.5 h-4.5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== المحتوى الرئيسي ==================== -->
+  <main class="max-w-2xl mx-auto px-3.5 pt-3">
+
+    <!-- 1. الرئيسية (خفيفة وسريعة) -->
+    <section id="view-dashboard" class="view-panel active space-y-4">
+
+      <!-- بطاقة الصندوق النقدي الرئيسية -->
+      <div class="rounded-3xl p-5 bg-gradient-to-br from-[#191E2C] via-[#10131C] to-[#090A0F] border border-[#E6C26C]/60 shadow-2xl relative overflow-hidden">
+        <div class="absolute -left-8 -top-8 w-32 h-32 rounded-full bg-[#E6C26C]/10 blur-2xl pointer-events-none"></div>
+        <div class="flex items-center justify-between">
+          <span class="inline-flex items-center gap-1.5 text-xs font-bold text-[#F3D999]">
+            <svg class="w-4 h-4 text-[#E6C26C]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4"/></svg>
+            الصندوق النقدي الفعلي
+          </span>
+          <button onclick="App.navigate('balances')" class="text-[11px] font-bold text-[#E6C26C] bg-[#E6C26C]/10 px-2.5 py-1 rounded-lg border border-[#E6C26C]/30">
+            تفاصيل الأرصدة ←
+          </button>
+        </div>
+
+        <div class="mt-3 flex items-baseline gap-2">
+          <h1 id="dash-cash" class="text-3xl sm:text-4xl font-black text-[#E6C26C] num">0</h1>
+          <span class="currency-unit text-sm font-bold text-[#F3D999]">ر.ي</span>
+        </div>
+
+        <div class="mt-3 pt-2.5 border-t border-[#E6C26C]/15 flex items-center justify-between text-[11px]">
+          <span class="text-gray-400">مرحل: <strong id="dash-opening" class="text-[#F3D999] num">0 ر.ي</strong></span>
+          <span class="text-[#E6C26C] font-bold">«الحلم شاص والواقع فوق باص»</span>
+        </div>
+      </div>
+
+      <!-- أزرار الإدخال السريع للعمليات الخمس -->
+      <div>
+        <h3 class="text-xs font-extrabold text-[#E6C26C] mb-2.5">تسجيل عملية</h3>
+        <div class="grid grid-cols-3 gap-2.5">
+          <!-- إيراد -->
+          <button onclick="App.navigate('income')" class="cockpit-card p-3.5 flex flex-col items-center gap-2 hover:border-[#E6C26C] active:scale-95">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-500/12 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+            </div>
+            <span class="text-xs font-bold">إيراد</span>
+          </button>
+
+          <!-- وقود وزيوت -->
+          <button onclick="App.navigate('fuel')" class="cockpit-card p-3.5 flex flex-col items-center gap-2 hover:border-[#E6C26C] active:scale-95">
+            <div class="w-10 h-10 rounded-2xl bg-amber-500/12 border border-amber-500/30 text-amber-400 flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 22V5a2 2 0 012-2h8a2 2 0 012 2v17M3 22h12M15 10h2a2 2 0 012 2v4a2 2 0 004 0V9l-3-3"/><path d="M6 7h6v4H6z"/></svg>
+            </div>
+            <span class="text-xs font-bold">الوقود والزيوت</span>
+          </button>
+
+          <!-- صيانة -->
+          <button onclick="App.navigate('maintenance')" class="cockpit-card p-3.5 flex flex-col items-center gap-2 hover:border-[#E6C26C] active:scale-95">
+            <div class="w-10 h-10 rounded-2xl bg-sky-500/12 border border-sky-500/30 text-sky-400 flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+            </div>
+            <span class="text-xs font-bold">الصيانة</span>
+          </button>
+
+          <!-- قطع غيار -->
+          <button onclick="App.navigate('parts')" class="cockpit-card p-3.5 flex flex-col items-center gap-2 hover:border-[#E6C26C] active:scale-95">
+            <div class="w-10 h-10 rounded-2xl bg-purple-500/12 border border-purple-500/30 text-purple-400 flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            </div>
+            <span class="text-xs font-bold">قطع الغيار</span>
+          </button>
+
+          <!-- مصروفات أخرى -->
+          <button onclick="App.navigate('other-expense')" class="cockpit-card p-3.5 flex flex-col items-center gap-2 hover:border-[#E6C26C] active:scale-95 col-span-2">
+            <div class="w-10 h-10 rounded-2xl bg-rose-500/12 border border-rose-500/30 text-rose-400 flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+            </div>
+            <span class="text-xs font-bold">مصروفات أخرى (سائق / غسيل / مخالفات)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- آخر العمليات -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-xs font-extrabold text-[#E6C26C]">آخر العمليات</h3>
+          <button onclick="App.navigate('ledger')" class="text-xs font-bold text-[#F3D999]">الكل ←</button>
+        </div>
+        <div id="recent-list" class="space-y-2"></div>
+      </div>
+    </section>
+
+    <!-- 2. قائمة الأرصدة المستقلة (جديد) -->
+    <section id="view-balances" class="view-panel space-y-3.5">
+
+      <!-- ملخص الصندوق والترحيل -->
+      <div class="cockpit-card p-4 space-y-3">
+        <div class="flex items-center justify-between border-b border-[#E6C26C]/20 pb-2.5">
+          <span class="text-xs font-extrabold text-[#E6C26C]">حركة الصندوق النقدي</span>
+          <span id="bal-month-label" class="text-xs font-bold text-gray-400 num"></span>
+        </div>
+
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between items-center py-1">
+            <span class="text-gray-400">الرصيد المرحّل من الشهر السابق</span>
+            <strong id="bal-opening" class="font-extrabold text-[#F3D999] num">0 ر.ي</strong>
+          </div>
+          <div class="flex justify-between items-center py-1">
+            <span class="text-gray-400">(+) الإيرادات المقبوضة نقداً</span>
+            <strong id="bal-collected" class="font-extrabold text-emerald-400 num">0 ر.ي</strong>
+          </div>
+          <div class="flex justify-between items-center py-1">
+            <span class="text-gray-400">(-) المصروفات المدفوعة نقداً</span>
+            <strong id="bal-paid" class="font-extrabold text-rose-400 num">0 ر.ي</strong>
+          </div>
+          <div class="flex justify-between items-center pt-2.5 border-t border-[#E6C26C]/25 text-sm">
+            <span class="font-extrabold text-[#E6C26C]">الرصيد النقدي الفعلي</span>
+            <strong id="bal-closing" class="font-black text-[#E6C26C] num">0 ر.ي</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- ملخص الأداء المحاسبي -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="cockpit-card p-3.5">
+          <span class="text-[11px] font-bold text-gray-400 block">إجمالي الإيرادات</span>
+          <strong id="bal-total-inc" class="text-base font-black text-emerald-400 num mt-1 block">0 ر.ي</strong>
+          <span class="text-[10px] text-gray-400">مقبوض + مستحق</span>
+        </div>
+
+        <div class="cockpit-card p-3.5">
+          <span class="text-[11px] font-bold text-gray-400 block">إجمالي المصروفات</span>
+          <strong id="bal-total-exp" class="text-base font-black text-rose-400 num mt-1 block">0 ر.ي</strong>
+          <span class="text-[10px] text-gray-400">مدفوع + آجل</span>
+        </div>
+
+        <div class="cockpit-card p-3.5 col-span-2 flex items-center justify-between">
+          <div>
+            <span class="text-[11px] font-bold text-gray-400 block">صافي الربح المحاسبي</span>
+            <strong id="bal-net-profit" class="text-lg font-black text-[#E6C26C] num">0 ر.ي</strong>
+          </div>
+          <span id="bal-perf-pill" class="px-3 py-1.5 rounded-full text-xs font-extrabold bg-[#E6C26C]/15 text-[#E6C26C] border border-[#E6C26C]/30">
+            متوازن
+          </span>
+        </div>
+      </div>
+
+      <!-- الذمم والمستحقات -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="cockpit-card p-3.5 border-sky-500/30">
+          <div class="flex items-center gap-1.5 text-sky-400 text-xs font-bold mb-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            <span>مستحقات (لنا)</span>
+          </div>
+          <strong id="bal-receivables" class="text-base font-black text-sky-400 num">0 ر.ي</strong>
+          <span class="block text-[10px] text-gray-400 mt-0.5">بانتظار التحصيل</span>
+        </div>
+
+        <div class="cockpit-card p-3.5 border-amber-500/30">
+          <div class="flex items-center gap-1.5 text-amber-400 text-xs font-bold mb-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            <span>غير مدفوع (علينا)</span>
+          </div>
+          <strong id="bal-payables" class="text-base font-black text-amber-400 num">0 ر.ي</strong>
+          <span class="block text-[10px] text-gray-400 mt-0.5">التزامات آجلة</span>
+        </div>
+      </div>
+
+      <!-- مؤشر نسبة التحصيل النقدي -->
+      <div class="cockpit-card p-4 space-y-2">
+        <div class="flex justify-between text-xs font-bold">
+          <span class="text-gray-400">نسبة تحصيل إيرادات الشهر</span>
+          <span id="bal-collect-pct" class="text-[#E6C26C] num">0%</span>
+        </div>
+        <div class="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+          <div id="bal-collect-bar" class="h-full bg-gradient-to-l from-[#F3D999] to-[#E6C26C] transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 3. الإيرادات -->
+    <section id="view-income" class="view-panel">
+      <div class="cockpit-card p-5 space-y-4">
+        <h3 class="text-sm font-extrabold text-[#E6C26C] border-b border-[#E6C26C]/20 pb-2.5">إضافة إيراد</h3>
+        <form onsubmit="App.submitIncome(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">التصنيف</label>
+            <select id="inc-subtype" class="field-input" onchange="App.onIncomeTypeChange(this.value)" required>
+              <option value="school">إيرادات المدرسة (شهري ثابت)</option>
+              <option value="trips">إيرادات المشاوير</option>
+              <option value="other">إيرادات أخرى</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">المبلغ (<span class="currency-unit">ر.ي</span>)</label>
+              <input type="number" id="inc-amount" class="field-input num" step="any" min="1" required oninput="App.syncCollected()" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">التاريخ</label>
+              <input type="date" id="inc-date" class="field-input num" required onchange="App.onIncomeTypeChange(document.getElementById('inc-subtype').value)" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">التحصيل</label>
+              <select id="inc-status" class="field-input" onchange="App.onIncomeStatusChange()" required>
+                <option value="collected">مقبوض بالكامل</option>
+                <option value="partial">مقبوض جزئياً</option>
+                <option value="receivable">مستحق</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">المقبوض فعلياً</label>
+              <input type="number" id="inc-collected" class="field-input num" step="any" min="0" required />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">الوصف</label>
+            <input type="text" id="inc-desc" class="field-input" placeholder="بيان الإيراد..." required />
+          </div>
+          <button type="submit" class="btn-gold w-full py-3 text-sm">حفظ الإيراد</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 4. الوقود والزيوت -->
+    <section id="view-fuel" class="view-panel">
+      <div class="cockpit-card p-5 space-y-4">
+        <h3 class="text-sm font-extrabold text-[#E6C26C] border-b border-[#E6C26C]/20 pb-2.5">الوقود والزيوت</h3>
+        <form onsubmit="App.submitFuel(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">النوع</label>
+            <select id="fuel-subtype" class="field-input" onchange="App.toggleFuelFields()" required>
+              <option value="petrol">شراء بترول</option>
+              <option value="oil">شراء زيوت</option>
+              <option value="fluids">سوائل المركبة</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">المبلغ (<span class="currency-unit">ر.ي</span>)</label>
+              <input type="number" id="fuel-amount" class="field-input num" step="any" min="1" required oninput="App.calcLiters()" />
+            </div>
+            <div id="fuel-price-box">
+              <label class="block text-xs font-bold text-gray-400 mb-1">سعر اللتر</label>
+              <input type="number" id="fuel-liter-price" class="field-input num" step="any" min="0" oninput="App.calcLiters()" />
+            </div>
+          </div>
+          <div id="fuel-liters-banner" class="p-3 rounded-xl bg-[#E6C26C]/10 border border-dashed border-[#E6C26C]/45 text-xs font-bold text-[#F3D999] flex justify-between items-center">
+            <span>الكمية التلقائية:</span>
+            <span id="fuel-liters-val" class="text-sm font-black num">0.00 لتر</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">التاريخ</label>
+              <input type="date" id="fuel-date" class="field-input num" required />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">الدفع</label>
+              <select id="fuel-pay-status" class="field-input">
+                <option value="paid">مدفوع نقداً</option>
+                <option value="unpaid">آجل (غير مدفوع)</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">ملاحظات</label>
+            <input type="text" id="fuel-desc" class="field-input" placeholder="المحطة أو نوع الزيت..." />
+          </div>
+          <button type="submit" class="btn-gold w-full py-3 text-sm">حفظ العملية</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 5. الصيانة -->
+    <section id="view-maintenance" class="view-panel">
+      <div class="cockpit-card p-5 space-y-4">
+        <h3 class="text-sm font-extrabold text-[#E6C26C] border-b border-[#E6C26C]/20 pb-2.5">الإصلاحات والصيانة</h3>
+        <form onsubmit="App.submitMaintenance(event)" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">التصنيف</label>
+              <select id="maint-subtype" class="field-input" required>
+                <option value="periodic">صيانة دورية</option>
+                <option value="repairs">إصلاحات</option>
+                <option value="bodywork">سمكرة</option>
+                <option value="tire">بنشر</option>
+                <option value="mechanic">ميكانيك</option>
+                <option value="electric">كهرباء</option>
+                <option value="paint">دهان</option>
+                <option value="other_maint">صيانة أخرى</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">المبلغ (<span class="currency-unit">ر.ي</span>)</label>
+              <input type="number" id="maint-amount" class="field-input num" step="any" min="1" required />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">التاريخ</label>
+              <input type="date" id="maint-date" class="field-input num" required />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">الدفع</label>
+              <select id="maint-pay-status" class="field-input">
+                <option value="paid">مدفوع نقداً</option>
+                <option value="unpaid">غير مدفوع</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">الوصف</label>
+            <input type="text" id="maint-desc" class="field-input" placeholder="تفاصيل الصيانة..." required />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">صورة الفاتورة</label>
+            <input type="file" id="maint-file" accept="image/*" class="field-input text-xs" onchange="App.previewReceipt(this)" />
+            <img id="maint-preview" class="hidden mt-2 max-h-36 rounded-xl border border-[#E6C26C]" alt="الفاتورة" />
+          </div>
+          <button type="submit" class="btn-gold w-full py-3 text-sm">حفظ الصيانة</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 6. قطع الغيار -->
+    <section id="view-parts" class="view-panel">
+      <div class="cockpit-card p-5 space-y-4">
+        <h3 class="text-sm font-extrabold text-[#E6C26C] border-b border-[#E6C26C]/20 pb-2.5">قطع الغيار والتركيب</h3>
+        <form onsubmit="App.submitParts(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">اسم القطعة</label>
+            <input type="text" id="part-name" class="field-input" placeholder="مثال: طقم فحمات / دينمو" required />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">سعر القطعة</label>
+              <input type="number" id="part-price" class="field-input num" step="any" min="0" required oninput="App.calcPartTotal()" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">أجرة التركيب</label>
+              <input type="number" id="part-labor" class="field-input num" step="any" min="0" value="0" required oninput="App.calcPartTotal()" />
+            </div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#E6C26C]/10 border border-dashed border-[#E6C26C]/45 text-xs font-bold text-[#F3D999] flex justify-between items-center">
+            <span>الإجمالي:</span>
+            <span id="part-total-val" class="text-sm font-black num">0 ر.ي</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">التاريخ</label>
+              <input type="date" id="part-date" class="field-input num" required />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">الدفع</label>
+              <select id="part-pay-status" class="field-input">
+                <option value="paid">مدفوع نقداً</option>
+                <option value="unpaid">غير مدفوع</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">ملاحظات</label>
+            <input type="text" id="part-notes" class="field-input" placeholder="ملاحظات إضافية..." />
+          </div>
+          <button type="submit" class="btn-gold w-full py-3 text-sm">حفظ قطعة الغيار</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 7. مصروفات أخرى -->
+    <section id="view-other-expense" class="view-panel">
+      <div class="cockpit-card p-5 space-y-4">
+        <h3 class="text-sm font-extrabold text-[#E6C26C] border-b border-[#E6C26C]/20 pb-2.5">مصروفات أخرى</h3>
+        <form onsubmit="App.submitOtherExpense(event)" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">النوع</label>
+              <select id="other-subtype" class="field-input" required>
+                <option value="driver_wage">أجور السائق</option>
+                <option value="fines">المخالفات</option>
+                <option value="wash">غسيل الباص</option>
+                <option value="fees">الرسوم</option>
+                <option value="parking">المواقف</option>
+                <option value="misc">مصروفات متنوعة</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">المبلغ (<span class="currency-unit">ر.ي</span>)</label>
+              <input type="number" id="other-amount" class="field-input num" step="any" min="1" required />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">التاريخ</label>
+              <input type="date" id="other-date" class="field-input num" required />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">الدفع</label>
+              <select id="other-pay-status" class="field-input">
+                <option value="paid">مدفوع نقداً</option>
+                <option value="unpaid">غير مدفوع</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">الوصف</label>
+            <input type="text" id="other-desc" class="field-input" placeholder="بيان المصروف..." required />
+          </div>
+          <button type="submit" class="btn-gold w-full py-3 text-sm">حفظ المصروف</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 8. سجل العمليات -->
+    <section id="view-ledger" class="view-panel space-y-3">
+      <div class="cockpit-card p-3.5 space-y-2.5">
+        <input type="text" id="ledger-search" class="field-input" placeholder="بحث بالوصف أو النوع..." oninput="App.renderLedger()" />
+        <div class="grid grid-cols-2 gap-2.5">
+          <select id="ledger-filter-type" class="field-input text-xs" onchange="App.renderLedger()">
+            <option value="all">كل العمليات</option>
+            <option value="income">الإيرادات</option>
+            <option value="fuel">الوقود والزيوت</option>
+            <option value="maintenance">الصيانة</option>
+            <option value="parts">قطع الغيار</option>
+            <option value="other_expense">مصروفات أخرى</option>
+          </select>
+          <input type="date" id="ledger-filter-date" class="field-input text-xs num" onchange="App.renderLedger()" />
+        </div>
+      </div>
+      <div id="ledger-list" class="space-y-2"></div>
+    </section>
+
+    <!-- 9. التقارير -->
+    <section id="view-reports" class="view-panel space-y-4">
+      <div class="cockpit-card p-4 space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">النطاق</label>
+            <select id="rep-period" class="field-input text-xs" onchange="App.renderReport()">
+              <option value="daily">يومي</option>
+              <option value="monthly" selected>شهري</option>
+              <option value="yearly">سنوي</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">التقرير</label>
+            <select id="rep-category" class="field-input text-xs" onchange="App.renderReport()">
+              <option value="all">شامل</option>
+              <option value="income">الإيرادات</option>
+              <option value="expense">المصروفات</option>
+              <option value="balances">المستحق والآجل</option>
+            </select>
+          </div>
+        </div>
+        <div id="rep-day-box" class="hidden">
+          <input type="date" id="rep-day-input" class="field-input text-xs num" onchange="App.renderReport()" />
+        </div>
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <button onclick="App.exportPDF()" class="btn-gold py-2.5 text-xs flex items-center justify-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+            <span>تصدير PDF</span>
+          </button>
+          <button onclick="App.exportExcel()" class="btn-outline-gold py-2.5 text-xs flex items-center justify-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            <span>تصدير CSV (يفتح في Excel)</span>
+          </button>
+        </div>
+      </div>
+      <div id="report-output" class="cockpit-card p-4 overflow-x-auto"></div>
+    </section>
+
+    <!-- 10. الإعدادات -->
+    <section id="view-settings" class="view-panel space-y-4">
+      <div class="cockpit-card p-5 space-y-3.5">
+        <h3 class="text-sm font-extrabold text-[#E6C26C] border-b border-[#E6C26C]/20 pb-2">الإعدادات</h3>
+        <div>
+          <label class="block text-xs font-bold text-gray-400 mb-1">اسم المستخدم</label>
+          <input type="text" id="set-username" class="field-input" placeholder="مثال: أبو محمد" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">العملة</label>
+            <input type="text" id="set-currency" class="field-input" value="ر.ي" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">راتب المدرسة الثابت</label>
+            <input type="number" id="set-school-salary" class="field-input num" step="any" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">تذكير صباحي</label>
+            <input type="time" id="set-morning-time" class="field-input num" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">تذكير مسائي</label>
+            <input type="time" id="set-evening-time" class="field-input num" />
+          </div>
+        </div>
+        <button onclick="App.saveSettings()" class="btn-gold w-full py-3 text-sm">حفظ الإعدادات</button>
+      </div>
+
+      <div class="cockpit-card p-5 space-y-3.5">
+        <h3 class="text-sm font-extrabold text-[#E6C26C]">راتب المدرسة والسلف</h3>
+        <p class="text-[11px] text-gray-400">يُنشأ استحقاق الراتب تلقائياً لكل شهر، ويمكن تسجيل أكثر من سلفة خلال الشهر.</p>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="rounded-xl bg-[#E6C26C]/10 p-3"><span class="text-gray-400 block">راتب الشهر المحدد</span><strong id="school-month-salary" class="text-[#E6C26C] num text-base">0</strong></div>
+          <div class="rounded-xl bg-[#E6C26C]/10 p-3"><span class="text-gray-400 block">إجمالي السلف</span><strong id="school-month-advances" class="text-amber-400 num text-base">0</strong></div>
+          <div class="rounded-xl bg-[#E6C26C]/10 p-3"><span class="text-gray-400 block">المتبقي من الراتب</span><strong id="school-month-remaining" class="text-emerald-400 num text-base">0</strong></div>
+          <div class="rounded-xl bg-[#E6C26C]/10 p-3"><span class="text-gray-400 block">الشهر</span><strong id="school-month-key" class="text-[#E6C26C] num text-base">—</strong></div>
+        </div>
+        <div><label class="block text-xs font-bold text-gray-400 mb-1">مبلغ السلفة الجديدة</label>
+          <input type="number" id="school-advance-amount" class="field-input num" min="1" step="any" placeholder="أدخل مبلغ السلفة" /></div>
+        <button onclick="App.addSchoolAdvance()" class="btn-gold w-full py-3 text-sm">تسجيل سلفة من المدرسة</button>
+        <div id="school-advances-list" class="space-y-2 text-xs"></div>
+      </div>
+
+      <div class="cockpit-card p-5 space-y-3">
+        <h3 class="text-sm font-extrabold text-[#E6C26C]">النسخ الاحتياطي</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="DB.exportBackup()" class="btn-gold py-2.5 text-xs flex items-center justify-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            <span>تصدير نسخة</span>
+          </button>
+          <label class="btn-outline-gold py-2.5 text-xs flex items-center justify-center gap-1.5 cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            <span>استعادة نسخة</span>
+            <input type="file" accept=".json" class="hidden" onchange="DB.importBackup(this)" />
+          </label>
+        </div>
+      </div>
+
+      <!-- إدارة القوائم المخصصة -->
+      <div class="cockpit-card p-5 space-y-3.5">
+        <div>
+          <h3 class="text-sm font-extrabold text-[#E6C26C]">إدارة القوائم والتصنيفات</h3>
+          <p class="text-[11px] text-gray-400 mt-1">أنشئ قوائم رئيسية، وأضف تحت كل قائمة قوائم فرعية لتنظيم بياناتك.</p>
+        </div>
+        <div class="space-y-2">
+          <label class="block text-xs font-bold text-gray-400">اسم القائمة الرئيسية الجديدة</label>
+          <div class="flex gap-2">
+            <input id="new-menu-name" type="text" maxlength="45" class="field-input" placeholder="مثال: مصروفات الرحلات" />
+            <button onclick="App.addCustomMenu()" class="btn-gold px-4 text-xs shrink-0">إضافة</button>
+          </div>
+        </div>
+        <div id="custom-menus-list" class="space-y-3"></div>
+      </div>
+      <div class="text-center text-[10px] text-gray-500 py-2">صُمم بواسطة <span class="font-extrabold text-[#E6C26C]">م/ أحمد عبده</span></div>
+    </section>
+
+  </main>
+
+  <!-- ==================== شريط التنقل السفلي العائم (5 قوائم) ==================== -->
+  <nav class="fixed bottom-3 inset-x-3 z-40">
+    <div id="bottom-dock" class="max-w-2xl mx-auto rounded-2xl border border-[#E6C26C]/30 shadow-2xl px-1.5 py-2 grid grid-cols-5 gap-1" style="background: var(--bg-dock); backdrop-filter: blur(18px);">
+      <button onclick="App.navigate('dashboard')" data-nav="dashboard" class="nav-tab flex flex-col items-center gap-1 py-1 text-[#E6C26C] font-extrabold">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="text-[10px]">الرئيسية</span>
+      </button>
+
+      <button onclick="App.navigate('balances')" data-nav="balances" class="nav-tab flex flex-col items-center gap-1 py-1 text-gray-400 font-bold">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4"/></svg>
+        <span class="text-[10px]">الأرصدة</span>
+      </button>
+
+      <button onclick="App.navigate('ledger')" data-nav="ledger" class="nav-tab flex flex-col items-center gap-1 py-1 text-gray-400 font-bold">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <span class="text-[10px]">السجل</span>
+      </button>
+
+      <button onclick="App.navigate('reports')" data-nav="reports" class="nav-tab flex flex-col items-center gap-1 py-1 text-gray-400 font-bold">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        <span class="text-[10px]">التقارير</span>
+      </button>
+
+      <button onclick="App.navigate('settings')" data-nav="settings" class="nav-tab flex flex-col items-center gap-1 py-1 text-gray-400 font-bold">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span class="text-[10px]">الإعدادات</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- نافذة تعديل العملية -->
+  <div id="tx-modal" class="fixed inset-0 z-50 bg-black/80 hidden items-center justify-center p-4">
+    <div class="cockpit-card w-full max-w-md p-5 max-h-[86vh] overflow-y-auto space-y-3 border-[#E6C26C]/60">
+      <div class="flex items-center justify-between border-b border-[#E6C26C]/20 pb-2.5">
+        <h3 class="text-sm font-extrabold text-[#E6C26C]">تعديل العملية</h3>
+        <button onclick="App.closeModal()" class="w-8 h-8 rounded-lg bg-[#141824] text-gray-300 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="tx-modal-body" class="space-y-3"></div>
+    </div>
+  </div>
+
+  <!-- نافذة تغيير الاسم -->
+  <div id="name-modal" class="fixed inset-0 z-50 bg-black/80 hidden items-center justify-center p-4">
+    <div class="cockpit-card w-full max-w-sm p-5 space-y-3.5 border-[#E6C26C]/60">
+      <h3 class="text-sm font-extrabold text-[#E6C26C]">تغيير اسم المستخدم</h3>
+      <input type="text" id="quick-username-input" class="field-input" placeholder="أدخل اسمك..." />
+      <div class="grid grid-cols-2 gap-2.5">
+        <button onclick="App.saveQuickUsername()" class="btn-gold py-2.5 text-xs">حفظ</button>
+        <button onclick="App.closeNameModal()" class="btn-outline-gold py-2.5 text-xs">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة تأكيد الحذف -->
+  <div id="confirm-modal" class="fixed inset-0 z-50 bg-black/80 hidden items-center justify-center p-4">
+    <div class="cockpit-card w-full max-w-sm p-5 space-y-4 border-rose-500/50 text-center">
+      <div class="w-11 h-11 mx-auto rounded-full bg-rose-500/15 text-rose-400 flex items-center justify-center">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+      </div>
+      <p class="text-xs font-bold text-gray-200">حذف هذه العملية نهائياً؟</p>
+      <div class="grid grid-cols-2 gap-3">
+        <button id="btn-confirm-yes" class="py-2.5 rounded-xl bg-rose-600 text-white font-extrabold text-xs">حذف</button>
+        <button onclick="App.closeConfirm()" class="py-2.5 rounded-xl bg-[#141824] text-gray-300 font-bold text-xs">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- إشعار -->
+  <div id="toast-box" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 hidden px-5 py-2.5 rounded-full bg-gradient-to-l from-[#F3D999] to-[#E6C26C] text-[#090A0F] font-extrabold text-xs shadow-2xl"></div>
+
+  <script>
+    // ==================== قاعدة البيانات المحلية الدائمة ====================
+    const DB = {
+      dbName: 'BasMan_Cockpit_DB',
+      storeName: 'store',
+      state: {
+        settings: {
+          userName: 'كابتن الباص',
+          currency: 'ر.ي',
+          schoolSalary: 150000,
+          morningTime: '06:30',
+          eveningTime: '20:30',
+          theme: 'dark'
+        },
+        transactions: [],
+        customMenus: []
+      },
+
+      open() {
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(this.dbName, 1);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(this.storeName)) db.createObjectStore(this.storeName);
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      },
+
+      async init() {
+        try {
+          const db = await this.open();
+          await new Promise((resolve) => {
+            const tx = db.transaction(this.storeName, 'readonly');
+            const req = tx.objectStore(this.storeName).get('data');
+            req.onsuccess = () => {
+              if (req.result) {
+                this.state = {
+                  settings: { ...this.state.settings, ...(req.result.settings || {}) },
+                  transactions: req.result.transactions || [],
+                  customMenus: Array.isArray(req.result.customMenus) ? req.result.customMenus : []
+                };
+              }
+              resolve();
+            };
+            req.onerror = () => resolve();
+          });
+        } catch (err) { console.error(err); }
+      },
+
+      async save() {
+        let db;
+        try {
+          db = await this.open();
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(this.storeName, 'readwrite');
+            tx.objectStore(this.storeName).put(this.state, 'data');
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error || new Error('تعذر حفظ البيانات'));
+            tx.onabort = () => reject(tx.error || new Error('تم إلغاء عملية الحفظ'));
+          });
+        } catch (err) {
+          console.error('BasMan save error:', err);
+          if (window.App) App.notify('فشل الحفظ! تحقق من مساحة الجهاز ثم أعد المحاولة', true);
+          throw err;
+        } finally {
+          if (db) db.close();
+        }
+      },
+
+      async upsertTx(record) {
+        const idx = this.state.transactions.findIndex(t => t.id === record.id);
+        if (idx >= 0) this.state.transactions[idx] = record;
+        else this.state.transactions.unshift(record);
+        await this.save();
+      },
+
+      async removeTx(id) {
+        this.state.transactions = this.state.transactions.filter(t => t.id !== id);
+        await this.save();
+      },
+
+      exportBackup() {
+        const payload = { app: 'BasMan', exportedAt: new Date().toISOString(), data: this.state };
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+        a.download = `BasMan_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        App.notify('تم تصدير النسخة');
+      },
+
+      importBackup(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const parsed = JSON.parse(e.target.result);
+            if (!parsed.data || !Array.isArray(parsed.data.transactions)) throw new Error();
+            this.state = {
+              settings: { ...this.state.settings, ...(parsed.data.settings || {}) },
+              transactions: parsed.data.transactions,
+              customMenus: Array.isArray(parsed.data.customMenus) ? parsed.data.customMenus : []
+            };
+            await this.save();
+            App.loadSettingsUI();
+            App.refreshAll();
+            App.notify('تمت الاستعادة بنجاح');
+          } catch { App.notify('ملف غير صالح', true); }
+          input.value = '';
+        };
+        reader.readAsText(file);
+      }
+    };
+
+    // ==================== المحرك المحاسبي ====================
+    const Accounting = {
+      getOpeningCash(monthKey) {
+        let cash = 0;
+        for (const tx of DB.state.transactions) {
+          if (tx.monthKey < monthKey) {
+            cash += tx.type === 'income' ? Number(tx.paidOrCollected || 0) : -Number(tx.paidOrCollected || 0);
+          }
+        }
+        return cash;
+      },
+
+      getMonthMetrics(monthKey) {
+        const openingCash = this.getOpeningCash(monthKey);
+        const monthTxs = DB.state.transactions.filter(t => t.monthKey === monthKey);
+
+        let totalIncome = 0, collectedIncome = 0, receivables = 0;
+        let totalExpense = 0, paidExpense = 0, payables = 0;
+
+        for (const tx of monthTxs) {
+          const total = Number(tx.amount || 0);
+          const actual = Number(tx.paidOrCollected || 0);
+          if (tx.type === 'income') {
+            totalIncome += total;
+            collectedIncome += actual;
+            receivables += Math.max(0, total - actual);
+          } else {
+            totalExpense += total;
+            paidExpense += actual;
+            payables += Math.max(0, total - actual);
+          }
+        }
+
+        return {
+          openingCash,
+          totalIncome,
+          collectedIncome,
+          receivables,
+          totalExpense,
+          paidExpense,
+          payables,
+          netProfit: totalIncome - totalExpense,
+          closingCash: openingCash + collectedIncome - paidExpense,
+          txs: monthTxs
+        };
+      },
+
+      hasSchoolSalary(monthKey, ignoreId = null) {
+        return DB.state.transactions.some(
+          t => t.type === 'income' && t.subtype === 'school' && t.monthKey === monthKey && t.id !== ignoreId
+        );
+      }
+    };
+
+    // ==================== التطبيق ====================
+    const App = {
+      activeMonth: new Date().toISOString().slice(0, 7),
+      tempAttachment: '',
+      lastReminderMin: '',
+      viewStack: ['dashboard'],
+
+      escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
+      },
+
+      LABELS: {
+        school: 'راتب المدرسة', trips: 'مشاوير', other: 'إيراد آخر',
+        petrol: 'بترول', oil: 'زيوت', fluids: 'سوائل المركبة',
+        periodic: 'صيانة دورية', repairs: 'إصلاحات', bodywork: 'سمكرة',
+        tire: 'بنشر', mechanic: 'ميكانيك', electric: 'كهرباء', paint: 'دهان', other_maint: 'صيانة أخرى',
+        parts: 'قطع غيار',
+        driver_wage: 'أجور سائق', fines: 'مخالفات', wash: 'غسيل', fees: 'رسوم', parking: 'مواقف', misc: 'متنوعة'
+      },
+
+      async init() {
+        await DB.init();
+        if (!history.state || history.state.basman !== true) history.replaceState({ basman: true, view: 'dashboard' }, '', location.href);
+        this.applyTheme(DB.state.settings.theme);
+        this.updateGreeting();
+
+        const today = new Date().toISOString().slice(0, 10);
+        document.getElementById('month-picker').value = this.activeMonth;
+        ['inc-date', 'fuel-date', 'maint-date', 'part-date', 'other-date', 'rep-day-input'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = today;
+        });
+
+        this.loadSettingsUI();
+        await this.ensureSchoolSalary(this.activeMonth);
+        this.onIncomeTypeChange('school');
+        this.refreshAll();
+        this.startReminders();
+
+        setTimeout(() => {
+          const sp = document.getElementById('splash-screen');
+          sp.style.opacity = '0';
+          setTimeout(() => sp.classList.add('hidden'), 450);
+        }, 1400);
+      },
+
+      updateGreeting() {
+        const period = new Date().getHours() < 12 ? 'صباح الخير' : 'مساء الخير';
+        document.getElementById('greeting-text').textContent = `${period}، ${DB.state.settings.userName || 'كابتن الباص'}`;
+      },
+
+      openNameModal() {
+        document.getElementById('quick-username-input').value = DB.state.settings.userName || '';
+        const m = document.getElementById('name-modal');
+        m.classList.remove('hidden'); m.classList.add('flex');
+      },
+
+      closeNameModal() {
+        const m = document.getElementById('name-modal');
+        m.classList.add('hidden'); m.classList.remove('flex');
+      },
+
+      async saveQuickUsername() {
+        const val = document.getElementById('quick-username-input').value.trim();
+        if (!val) return;
+        DB.state.settings.userName = val;
+        await DB.save();
+        this.loadSettingsUI();
+        this.updateGreeting();
+        this.closeNameModal();
+        this.notify('تم تحديث الاسم');
+      },
+
+      toggleTheme() {
+        const next = DB.state.settings.theme === 'dark' ? 'light' : 'dark';
+        DB.state.settings.theme = next;
+        this.applyTheme(next);
+        DB.save();
+      },
+
+      applyTheme(mode) {
+        const isLight = mode === 'light';
+        document.body.classList.toggle('light-mode', isLight);
+        document.getElementById('icon-sun').classList.toggle('hidden', isLight);
+        document.getElementById('icon-moon').classList.toggle('hidden', !isLight);
+      },
+
+      navigate(view, options = {}) {
+        const current = document.querySelector('.view-panel.active')?.id?.replace('view-', '') || 'dashboard';
+        if (!options.fromPop && current !== view) {
+          history.pushState({ basman: true, view }, '', `#${view}`);
+          this.viewStack.push(view);
+        } else if (options.fromPop && this.viewStack.length > 1) {
+          this.viewStack.pop();
+        }
+        document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(`view-${view}`).classList.add('active');
+        document.getElementById('btn-back').classList.toggle('hidden', view === 'dashboard');
+
+        document.querySelectorAll('.nav-tab').forEach(t => {
+          const active = t.dataset.nav === view;
+          t.classList.toggle('text-[#E6C26C]', active);
+          t.classList.toggle('text-gray-400', !active);
+        });
+
+        const titles = {
+          dashboard: 'الرئيسية',
+          balances: 'ملخص الأرصدة',
+          income: 'الإيرادات',
+          fuel: 'الوقود والزيوت',
+          maintenance: 'الصيانة',
+          parts: 'قطع الغيار',
+          'other-expense': 'مصروفات أخرى',
+          ledger: 'السجل',
+          reports: 'التقارير',
+          settings: 'الإعدادات'
+        };
+        document.getElementById('page-heading').textContent = titles[view] || 'باص مان';
+
+        if (view === 'ledger') this.renderLedger();
+        if (view === 'reports') this.renderReport();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+
+      changeMonth(val) {
+        if (!val) return;
+        this.activeMonth = val;
+        this.ensureSchoolSalary(val).then(() => { this.refreshAll(); this.renderSchoolSalary(); });
+        this.notify(`شهر ${val}`);
+      },
+
+      fmt(n) {
+        return `${Number(n || 0).toLocaleString('en-US')} ${DB.state.settings.currency}`;
+      },
+
+      refreshAll() {
+        this.renderSchoolSalary();
+        document.querySelectorAll('.currency-unit').forEach(el => el.textContent = DB.state.settings.currency);
+        this.updateGreeting();
+
+        const m = Accounting.getMonthMetrics(this.activeMonth);
+
+        // الرئيسية
+        document.getElementById('dash-cash').textContent = Number(m.closingCash).toLocaleString('en-US');
+        document.getElementById('dash-opening').textContent = this.fmt(m.openingCash);
+
+        // قائمة الأرصدة المستقلة
+        document.getElementById('bal-month-label').textContent = this.activeMonth;
+        document.getElementById('bal-opening').textContent = this.fmt(m.openingCash);
+        document.getElementById('bal-collected').textContent = this.fmt(m.collectedIncome);
+        document.getElementById('bal-paid').textContent = this.fmt(m.paidExpense);
+        document.getElementById('bal-closing').textContent = this.fmt(m.closingCash);
+        document.getElementById('bal-total-inc').textContent = this.fmt(m.totalIncome);
+        document.getElementById('bal-total-exp').textContent = this.fmt(m.totalExpense);
+        document.getElementById('bal-net-profit').textContent = this.fmt(m.netProfit);
+        document.getElementById('bal-receivables').textContent = this.fmt(m.receivables);
+        document.getElementById('bal-payables').textContent = this.fmt(m.payables);
+
+        const pct = m.totalIncome > 0 ? Math.min(100, Math.round((m.collectedIncome / m.totalIncome) * 100)) : 0;
+        document.getElementById('bal-collect-pct').textContent = `${pct}%`;
+        document.getElementById('bal-collect-bar').style.width = `${pct}%`;
+
+        const pill = document.getElementById('bal-perf-pill');
+        if (m.netProfit > 0) {
+          pill.textContent = 'ربح إيجابي';
+          pill.className = 'px-3 py-1.5 rounded-full text-xs font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+        } else if (m.netProfit < 0) {
+          pill.textContent = 'عجز مصروفات';
+          pill.className = 'px-3 py-1.5 rounded-full text-xs font-extrabold bg-rose-500/15 text-rose-400 border border-rose-500/30';
+        } else {
+          pill.textContent = 'متوازن';
+          pill.className = 'px-3 py-1.5 rounded-full text-xs font-extrabold bg-[#E6C26C]/15 text-[#E6C26C] border border-[#E6C26C]/30';
+        }
+
+        this.renderRecent(m.txs);
+        this.renderLedger();
+        this.renderReport();
+      },
+
+      // --- الإيرادات ---
+      async ensureSchoolSalary(monthKey) {
+        let tx = DB.state.transactions.find(t => t.type === 'income' && t.subtype === 'school' && t.monthKey === monthKey);
+        if (!tx && Number(DB.state.settings.schoolSalary || 0) > 0) {
+          tx = { id: 'SCHOOL-' + monthKey, type: 'income', subtype: 'school', monthKey, date: `${monthKey}-01`,
+            amount: Number(DB.state.settings.schoolSalary), paidOrCollected: 0, advances: [],
+            description: `راتب المدرسة (${monthKey})`, createdAt: new Date().toISOString(), automaticSalary: true };
+          await DB.upsertTx(tx);
+        } else if (tx && !Array.isArray(tx.advances)) {
+          tx.advances = [];
+          await DB.upsertTx(tx);
+        }
+        this.renderSchoolSalary();
+      },
+
+      renderSchoolSalary() {
+        const tx = DB.state.transactions.find(t => t.type === 'income' && t.subtype === 'school' && t.monthKey === this.activeMonth);
+        const advances = tx?.advances || [];
+        const total = advances.reduce((sum, a) => sum + Number(a.amount || 0), 0);
+        const salary = Number(tx?.amount || DB.state.settings.schoolSalary || 0);
+        const remaining = Math.max(0, salary - Number(tx?.paidOrCollected || 0));
+        const put = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+        put('school-month-salary', this.fmt(salary));
+        put('school-month-advances', this.fmt(total));
+        put('school-month-remaining', this.fmt(remaining));
+        put('school-month-key', this.activeMonth);
+        const list = document.getElementById('school-advances-list');
+        if (list) list.innerHTML = advances.length ? advances.map(a => `<div class="flex justify-between rounded-lg bg-white/5 p-2"><span>${this.escapeHTML(a.date || '')}</span><strong class="text-amber-400 num">${this.fmt(a.amount)}</strong></div>`).join('') : '<p class="text-gray-500 text-center">لا توجد سلف مسجلة لهذا الشهر</p>';
+      },
+
+      async addSchoolAdvance() {
+        const amount = Number(document.getElementById('school-advance-amount').value);
+        if (!Number.isFinite(amount) || amount <= 0) return this.notify('أدخل مبلغ سلفة صحيح', true);
+        await this.ensureSchoolSalary(this.activeMonth);
+        const tx = DB.state.transactions.find(t => t.type === 'income' && t.subtype === 'school' && t.monthKey === this.activeMonth);
+        if (!tx) return this.notify('حدد راتب المدرسة من الإعدادات أولاً', true);
+        const remaining = Number(tx.amount || 0) - Number(tx.paidOrCollected || 0);
+        if (amount > remaining) return this.notify('مبلغ السلفة أكبر من الراتب المتبقي', true);
+        tx.advances = Array.isArray(tx.advances) ? tx.advances : [];
+        tx.advances.push({ id: 'ADV-' + Date.now(), amount, date: new Date().toISOString().slice(0, 10) });
+        tx.paidOrCollected = Number(tx.paidOrCollected || 0) + amount;
+        await DB.upsertTx(tx);
+        document.getElementById('school-advance-amount').value = '';
+        this.refreshAll();
+        this.renderSchoolSalary();
+        this.notify('تم تسجيل السلفة وخصمها من الراتب');
+      },
+
+      onIncomeTypeChange(val) {
+        const amt = document.getElementById('inc-amount');
+        const desc = document.getElementById('inc-desc');
+        const d = document.getElementById('inc-date').value || `${this.activeMonth}-01`;
+        if (val === 'school') {
+          amt.value = DB.state.settings.schoolSalary;
+          desc.value = `راتب المدرسة (${d.slice(0, 7)})`;
+        } else {
+          amt.value = '';
+          desc.value = '';
+        }
+        this.onIncomeStatusChange();
+      },
+
+      onIncomeStatusChange() {
+        const st = document.getElementById('inc-status').value;
+        const tot = Number(document.getElementById('inc-amount').value || 0);
+        const col = document.getElementById('inc-collected');
+        if (st === 'collected') { col.value = tot; col.readOnly = true; }
+        else if (st === 'receivable') { col.value = 0; col.readOnly = true; }
+        else { col.readOnly = false; }
+      },
+
+      syncCollected() {
+        if (document.getElementById('inc-status').value === 'collected') {
+          document.getElementById('inc-collected').value = document.getElementById('inc-amount').value;
+        }
+      },
+
+      async submitIncome(e) {
+        e.preventDefault();
+        const subtype = document.getElementById('inc-subtype').value;
+        const date = document.getElementById('inc-date').value;
+        const monthKey = date.slice(0, 7);
+        const amount = Number(document.getElementById('inc-amount').value);
+        const collected = Number(document.getElementById('inc-collected').value);
+
+        if (!date || !Number.isFinite(amount) || !Number.isFinite(collected) || amount <= 0 || collected < 0) return this.notify('تحقق من التاريخ والمبالغ المدخلة', true);
+        if (subtype === 'school' && Accounting.hasSchoolSalary(monthKey)) {
+          return this.notify(`راتب المدرسة مسجل مسبقاً لشهر ${monthKey}`, true);
+        }
+        if (collected > amount) return this.notify('المقبوض يتجاوز الإجمالي', true);
+
+        await DB.upsertTx({
+          id: 'TX-' + Date.now(), type: 'income', subtype, monthKey, date,
+          amount, paidOrCollected: collected,
+          description: document.getElementById('inc-desc').value,
+          createdAt: new Date().toISOString()
+        });
+
+        e.target.reset();
+        document.getElementById('inc-date').value = date;
+        this.onIncomeTypeChange('school');
+        this.refreshAll();
+        this.notify('تم حفظ الإيراد');
+        this.navigate('dashboard');
+      },
+
+      // --- الوقود ---
+      toggleFuelFields() {
+        const isPetrol = document.getElementById('fuel-subtype').value === 'petrol';
+        document.getElementById('fuel-price-box').style.display = isPetrol ? 'block' : 'none';
+        document.getElementById('fuel-liters-banner').style.display = isPetrol ? 'flex' : 'none';
+      },
+
+      calcLiters() {
+        const amt = Number(document.getElementById('fuel-amount').value || 0);
+        const price = Number(document.getElementById('fuel-liter-price').value || 0);
+        document.getElementById('fuel-liters-val').textContent = `${price > 0 ? (amt / price).toFixed(2) : '0.00'} لتر`;
+      },
+
+      async submitFuel(e) {
+        e.preventDefault();
+        const subtype = document.getElementById('fuel-subtype').value;
+        const amount = Number(document.getElementById('fuel-amount').value);
+        const price = Number(document.getElementById('fuel-liter-price').value || 0);
+        const liters = (subtype === 'petrol' && price > 0) ? +(amount / price).toFixed(2) : 0;
+        const date = document.getElementById('fuel-date').value;
+        const paid = document.getElementById('fuel-pay-status').value === 'paid';
+        const note = document.getElementById('fuel-desc').value.trim();
+        if (!date || !Number.isFinite(amount) || amount <= 0) return this.notify('أدخل تاريخاً ومبلغاً صحيحاً', true);
+
+        await DB.upsertTx({
+          id: 'TX-' + Date.now(), type: 'fuel', subtype, monthKey: date.slice(0, 7), date,
+          amount, paidOrCollected: paid ? amount : 0,
+          description: note || (subtype === 'petrol' ? `بترول (${liters} لتر)` : this.LABELS[subtype]),
+          createdAt: new Date().toISOString()
+        });
+
+        e.target.reset();
+        document.getElementById('fuel-date').value = date;
+        document.getElementById('fuel-liters-val').textContent = '0.00 لتر';
+        this.refreshAll();
+        this.notify('تم حفظ الوقود');
+        this.navigate('dashboard');
+      },
+
+      // --- الصيانة ---
+      previewReceipt(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.tempAttachment = e.target.result;
+          const img = document.getElementById('maint-preview');
+          img.src = this.tempAttachment;
+          img.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      },
+
+      async submitMaintenance(e) {
+        e.preventDefault();
+        const amount = Number(document.getElementById('maint-amount').value);
+        const date = document.getElementById('maint-date').value;
+        const paid = document.getElementById('maint-pay-status').value === 'paid';
+        if (!date || !Number.isFinite(amount) || amount <= 0) return this.notify('أدخل تاريخاً ومبلغاً صحيحاً', true);
+
+        await DB.upsertTx({
+          id: 'TX-' + Date.now(), type: 'maintenance',
+          subtype: document.getElementById('maint-subtype').value,
+          monthKey: date.slice(0, 7), date, amount,
+          paidOrCollected: paid ? amount : 0,
+          description: document.getElementById('maint-desc').value,
+          attachment: this.tempAttachment,
+          createdAt: new Date().toISOString()
+        });
+
+        this.tempAttachment = '';
+        document.getElementById('maint-preview').classList.add('hidden');
+        e.target.reset();
+        document.getElementById('maint-date').value = date;
+        this.refreshAll();
+        this.notify('تم حفظ الصيانة');
+        this.navigate('dashboard');
+      },
+
+      // --- قطع الغيار ---
+      calcPartTotal() {
+        const p = Number(document.getElementById('part-price').value || 0);
+        const l = Number(document.getElementById('part-labor').value || 0);
+        document.getElementById('part-total-val').textContent = this.fmt(p + l);
+      },
+
+      async submitParts(e) {
+        e.preventDefault();
+        const name = document.getElementById('part-name').value;
+        const price = Number(document.getElementById('part-price').value);
+        const labor = Number(document.getElementById('part-labor').value);
+        const total = price + labor;
+        const date = document.getElementById('part-date').value;
+        const paid = document.getElementById('part-pay-status').value === 'paid';
+        const notes = document.getElementById('part-notes').value.trim();
+        if (!date || !Number.isFinite(price) || !Number.isFinite(labor) || price < 0 || labor < 0 || total <= 0) return this.notify('تحقق من أسعار القطعة والأجرة', true);
+
+        await DB.upsertTx({
+          id: 'TX-' + Date.now(), type: 'parts', subtype: 'parts',
+          monthKey: date.slice(0, 7), date, amount: total,
+          paidOrCollected: paid ? total : 0,
+          description: `${name} (${price} + ${labor})${notes ? ' • ' + notes : ''}`,
+          createdAt: new Date().toISOString()
+        });
+
+        e.target.reset();
+        document.getElementById('part-date').value = date;
+        document.getElementById('part-total-val').textContent = this.fmt(0);
+        this.refreshAll();
+        this.notify('تم حفظ قطعة الغيار');
+        this.navigate('dashboard');
+      },
+
+      // --- مصروفات أخرى ---
+      async submitOtherExpense(e) {
+        e.preventDefault();
+        const amount = Number(document.getElementById('other-amount').value);
+        const date = document.getElementById('other-date').value;
+        const paid = document.getElementById('other-pay-status').value === 'paid';
+        if (!date || !Number.isFinite(amount) || amount <= 0) return this.notify('أدخل تاريخاً ومبلغاً صحيحاً', true);
+
+        await DB.upsertTx({
+          id: 'TX-' + Date.now(), type: 'other_expense',
+          subtype: document.getElementById('other-subtype').value,
+          monthKey: date.slice(0, 7), date, amount,
+          paidOrCollected: paid ? amount : 0,
+          description: document.getElementById('other-desc').value,
+          createdAt: new Date().toISOString()
+        });
+
+        e.target.reset();
+        document.getElementById('other-date').value = date;
+        this.refreshAll();
+        this.notify('تم حفظ المصروف');
+        this.navigate('dashboard');
+      },
+
+      // --- العرض والسجل ---
+      txRowHTML(tx) {
+        const isInc = tx.type === 'income';
+        const rem = Math.max(0, Number(tx.amount) - Number(tx.paidOrCollected));
+        return `
+          <div onclick="App.openTxModal('${tx.id}')" class="cockpit-card p-3.5 flex items-center justify-between gap-2 cursor-pointer active:scale-[0.99]">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[11px] font-extrabold text-[#E6C26C]">${this.escapeHTML(this.LABELS[tx.subtype] || tx.subtype)}</span>
+                ${tx.attachment ? `<svg class="w-3.5 h-3.5 text-[#F3D999]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>` : ''}
+              </div>
+              <p class="text-xs font-bold truncate mt-0.5">${this.escapeHTML(tx.description)}</p>
+              <div class="text-[11px] text-gray-400 mt-0.5 num">
+                ${tx.date} • فعلي: ${this.fmt(tx.paidOrCollected)}
+                ${rem > 0 ? `<span class="text-amber-400 font-bold"> • متبقي: ${this.fmt(rem)}</span>` : ''}
+              </div>
+            </div>
+            <div class="text-left shrink-0">
+              <div class="text-sm font-black num ${isInc ? 'text-emerald-400' : 'text-rose-400'}">
+                ${isInc ? '+' : '-'}${this.fmt(tx.amount)}
+              </div>
+              <span class="inline-block mt-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${rem === 0 ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}">
+                ${rem === 0 ? (isInc ? 'مقبوض' : 'مدفوع') : (isInc ? 'مستحق' : 'آجل')}
+              </span>
+            </div>
+          </div>
+        `;
+      },
+
+      renderRecent(list) {
+        const sub = list.slice(0, 4);
+        document.getElementById('recent-list').innerHTML = sub.length
+          ? sub.map(t => this.txRowHTML(t)).join('')
+          : `<div class="cockpit-card p-5 text-center text-xs text-gray-400">لا توجد عمليات مسجلة</div>`;
+      },
+
+      renderLedger() {
+        const q = (document.getElementById('ledger-search')?.value || '').toLowerCase();
+        const typeF = document.getElementById('ledger-filter-type')?.value || 'all';
+        const dateF = document.getElementById('ledger-filter-date')?.value || '';
+
+        const filtered = DB.state.transactions.filter(t => {
+          const matchQ = !q || (t.description || '').toLowerCase().includes(q) || (this.LABELS[t.subtype] || '').includes(q);
+          const matchT = typeF === 'all' || t.type === typeF;
+          const matchD = !dateF || t.date === dateF;
+          return matchQ && matchT && matchD;
+        });
+
+        const el = document.getElementById('ledger-list');
+        if (el) {
+          el.innerHTML = filtered.length
+            ? filtered.map(t => this.txRowHTML(t)).join('')
+            : `<div class="cockpit-card p-5 text-center text-xs text-gray-400">لا توجد نتائج</div>`;
+        }
+      },
+
+      openTxModal(id) {
+        const tx = DB.state.transactions.find(t => t.id === id);
+        if (!tx) return;
+        document.getElementById('tx-modal-body').innerHTML = `
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">الوصف</label>
+            <input type="text" id="edit-desc" class="field-input" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">المبلغ الإجمالي</label>
+              <input type="number" id="edit-amt" class="field-input num" step="any" value="${tx.amount}" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">المبلغ الفعلي</label>
+              <input type="number" id="edit-act" class="field-input num" step="any" value="${tx.paidOrCollected}" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">التاريخ</label>
+            <input type="date" id="edit-date" class="field-input num" value="${tx.date}" />
+          </div>
+          ${tx.attachment ? `<img src="${tx.attachment}" class="max-h-44 rounded-xl border border-[#E6C26C]" />` : ''}
+          <div class="grid grid-cols-2 gap-2.5 pt-2">
+            <button onclick="App.saveEdit('${tx.id}')" class="btn-gold py-2.5 text-xs">حفظ التعديل</button>
+            <button onclick="App.askDelete('${tx.id}')" class="py-2.5 rounded-xl bg-rose-600/20 border border-rose-500 text-rose-400 font-bold text-xs">حذف</button>
+          </div>
+        `;
+        document.getElementById('edit-desc').value = tx.description || '';
+        const m = document.getElementById('tx-modal');
+        m.classList.remove('hidden'); m.classList.add('flex');
+      },
+
+      closeModal() {
+        const m = document.getElementById('tx-modal');
+        m.classList.add('hidden'); m.classList.remove('flex');
+      },
+
+      async saveEdit(id) {
+        const tx = DB.state.transactions.find(t => t.id === id);
+        if (!tx) return;
+        const amt = Number(document.getElementById('edit-amt').value);
+        const act = Number(document.getElementById('edit-act').value);
+        const dt = document.getElementById('edit-date').value;
+        const mKey = dt.slice(0, 7);
+
+        if (!dt || !Number.isFinite(amt) || !Number.isFinite(act) || amt <= 0 || act < 0) return this.notify('تحقق من التاريخ والمبالغ المدخلة', true);
+        if (act > amt) return this.notify('الفعلي أكبر من الإجمالي', true);
+        if (tx.subtype === 'school' && Accounting.hasSchoolSalary(mKey, tx.id)) {
+          return this.notify(`راتب المدرسة مسجل لشهر ${mKey}`, true);
+        }
+
+        tx.description = document.getElementById('edit-desc').value;
+        tx.amount = amt;
+        tx.paidOrCollected = act;
+        tx.date = dt;
+        tx.monthKey = mKey;
+
+        await DB.upsertTx(tx);
+        this.closeModal();
+        this.refreshAll();
+        this.notify('تم التعديل');
+      },
+
+      askDelete(id) {
+        const cm = document.getElementById('confirm-modal');
+        cm.classList.remove('hidden'); cm.classList.add('flex');
+        document.getElementById('btn-confirm-yes').onclick = async () => {
+          await DB.removeTx(id);
+          this.closeConfirm();
+          this.closeModal();
+          this.refreshAll();
+          this.notify('تم الحذف');
+        };
+      },
+
+      closeConfirm() {
+        const cm = document.getElementById('confirm-modal');
+        cm.classList.add('hidden'); cm.classList.remove('flex');
+      },
+
+      getReportData() {
+        const period = document.getElementById('rep-period').value;
+        const cat = document.getElementById('rep-category').value;
+        const day = document.getElementById('rep-day-input').value;
+
+        let list = [...DB.state.transactions];
+        if (period === 'daily' && day) list = list.filter(t => t.date === day);
+        else if (period === 'monthly') list = list.filter(t => t.monthKey === this.activeMonth);
+        else if (period === 'yearly') list = list.filter(t => t.date.startsWith(this.activeMonth.slice(0, 4)));
+
+        if (cat === 'income') list = list.filter(t => t.type === 'income');
+        else if (cat === 'expense') list = list.filter(t => t.type !== 'income');
+        else if (cat === 'balances') list = list.filter(t => Number(t.amount) > Number(t.paidOrCollected));
+
+        return { period, cat, list };
+      },
+
+      renderReport() {
+        const pEl = document.getElementById('rep-period');
+        if (!pEl) return;
+        document.getElementById('rep-day-box').classList.toggle('hidden', pEl.value !== 'daily');
+
+        const { list } = this.getReportData();
+        let inc = 0, exp = 0;
+        list.forEach(t => { if (t.type === 'income') inc += Number(t.amount); else exp += Number(t.amount); });
+
+        const rows = list.map(t => `
+          <tr class="border-b border-[#E6C26C]/15">
+            <td class="p-2 num whitespace-nowrap">${t.date}</td>
+            <td class="p-2 font-bold text-[#E6C26C]">${this.LABELS[t.subtype] || t.subtype}</td>
+            <td class="p-2">${this.escapeHTML(t.description)}</td>
+            <td class="p-2 font-bold num">${this.fmt(t.amount)}</td>
+            <td class="p-2 num">${this.fmt(t.paidOrCollected)}</td>
+          </tr>
+        `).join('');
+
+        document.getElementById('report-output').innerHTML = `
+          <div class="grid grid-cols-3 gap-2 text-xs mb-3 bg-[#141824]/70 p-3 rounded-xl">
+            <div><span class="text-gray-400 block">الإيرادات</span><strong class="text-emerald-400 num">${this.fmt(inc)}</strong></div>
+            <div><span class="text-gray-400 block">المصروفات</span><strong class="text-rose-400 num">${this.fmt(exp)}</strong></div>
+            <div><span class="text-gray-400 block">الصافي</span><strong class="text-[#E6C26C] num">${this.fmt(inc - exp)}</strong></div>
+          </div>
+          <table class="w-full text-right text-xs border-collapse">
+            <thead>
+              <tr class="bg-[#141824] text-[#E6C26C]">
+                <th class="p-2">التاريخ</th>
+                <th class="p-2">النوع</th>
+                <th class="p-2">البيان</th>
+                <th class="p-2">الإجمالي</th>
+                <th class="p-2">الفعلي</th>
+              </tr>
+            </thead>
+            <tbody>${rows || '<tr><td colspan="5" class="p-4 text-center text-gray-400">لا توجد بيانات</td></tr>'}</tbody>
+          </table>
+        `;
+      },
+
+      exportExcel() {
+        const { period, cat, list } = this.getReportData();
+        const cur = DB.state.settings.currency;
+        const cell = value => `\"${String(value ?? '').replace(/\"/g, '\"\"')}\"`;
+        let csv = `\uFEFF${['التاريخ','التصنيف','الوصف',`الإجمالي (${cur})`,`الفعلي (${cur})`].map(cell).join(',')}\r\n`;
+        list.forEach(t => {
+          csv += [t.date, this.LABELS[t.subtype] || t.subtype, t.description, t.amount, t.paidOrCollected].map(cell).join(',') + '\r\n';
+        });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+        a.download = `BasMan_${period}_${cat}_${this.activeMonth}.csv`;
+        a.click();
+        this.notify('تم تصدير ملف CSV المتوافق مع Excel');
+      },
+
+      exportPDF() {
+        const html = document.getElementById('report-output').innerHTML;
+        const win = window.open('', '_blank');
+        if (!win) return this.notify('اسمح بالنوافذ المنبثقة', true);
+        win.document.write(`
+          <html lang="ar" dir="rtl"><head><title>BasMan Report</title>
+          <style>body{font-family:Tahoma,sans-serif;padding:20px}h1{color:#B88924;margin:0}table{width:100%;border-collapse:collapse;margin-top:14px;font-size:12px}th,td{border:1px solid #ccc;padding:7px;text-align:right}th{background:#10131C;color:#E6C26C}</style>
+          </head><body><h1>باص مان (BasMan)</h1><p>«الحلم شاص والواقع فوق باص» • ${DB.state.settings.userName}</p><hr/>${html}<p style=\"text-align:center;color:#777;font-size:11px;margin-top:24px\">صُمم بواسطة م/ أحمد عبده</p></body></html>
+        `);
+        win.document.close();
+        setTimeout(() => win.print(), 300);
+      },
+
+      renderCustomMenus() {
+        const host = document.getElementById('custom-menus-list');
+        if (!host) return;
+        const menus = Array.isArray(DB.state.customMenus) ? DB.state.customMenus : [];
+        if (!menus.length) {
+          host.innerHTML = '<div class="rounded-xl border border-dashed border-[#E6C26C]/25 p-4 text-center text-xs text-gray-500">لا توجد قوائم مخصصة حتى الآن</div>';
+          return;
+        }
+        host.innerHTML = menus.map(menu => `
+          <div class="rounded-2xl border border-[#E6C26C]/20 bg-[#E6C26C]/5 p-3 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <strong class="text-xs text-[#E6C26C]">${this.escapeHTML(menu.name)}</strong>
+              <button onclick="App.deleteCustomMenu('${this.escapeHTML(menu.id)}')" class="text-[10px] text-rose-400 border border-rose-500/30 rounded-lg px-2 py-1">حذف القائمة</button>
+            </div>
+            <div class="flex gap-2">
+              <input id="sub-${this.escapeHTML(menu.id)}" maxlength="45" class="field-input text-xs" placeholder="اسم القائمة الفرعية" />
+              <button onclick="App.addCustomSubmenu('${this.escapeHTML(menu.id)}')" class="btn-outline-gold px-3 text-[11px] shrink-0">إضافة فرعية</button>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              ${(menu.children || []).length ? menu.children.map(child => `<span class="inline-flex items-center gap-1 rounded-lg bg-black/10 border border-[#E6C26C]/15 px-2 py-1 text-[10px] text-gray-300">${this.escapeHTML(child.name)}<button aria-label="حذف ${this.escapeHTML(child.name)}" onclick="App.deleteCustomSubmenu('${this.escapeHTML(menu.id)}','${this.escapeHTML(child.id)}')" class="text-rose-400 mr-1">×</button></span>`).join('') : '<span class="text-[10px] text-gray-500">لا توجد قوائم فرعية</span>'}
+            </div>
+          </div>`).join('');
+      },
+
+      async addCustomMenu() {
+        const input = document.getElementById('new-menu-name');
+        const name = input.value.trim();
+        if (!name) return this.notify('اكتب اسم القائمة أولاً', true);
+        if (!Array.isArray(DB.state.customMenus)) DB.state.customMenus = [];
+        if (DB.state.customMenus.some(m => m.name.toLowerCase() === name.toLowerCase())) return this.notify('هذه القائمة موجودة بالفعل', true);
+        DB.state.customMenus.push({ id: 'MENU-' + Date.now(), name, children: [] });
+        await DB.save();
+        input.value = '';
+        this.renderCustomMenus();
+        this.notify('تمت إضافة القائمة');
+      },
+
+      async addCustomSubmenu(menuId) {
+        const menu = DB.state.customMenus.find(m => m.id === menuId);
+        const input = document.getElementById('sub-' + menuId);
+        const name = input?.value.trim();
+        if (!menu || !name) return this.notify('اكتب اسم القائمة الفرعية', true);
+        menu.children = Array.isArray(menu.children) ? menu.children : [];
+        if (menu.children.some(c => c.name.toLowerCase() === name.toLowerCase())) return this.notify('القائمة الفرعية موجودة بالفعل', true);
+        menu.children.push({ id: 'SUB-' + Date.now(), name });
+        await DB.save();
+        this.renderCustomMenus();
+        this.notify('تمت إضافة القائمة الفرعية');
+      },
+
+      async deleteCustomMenu(menuId) {
+        if (!confirm('هل تريد حذف القائمة الرئيسية وكل القوائم الفرعية التابعة لها؟')) return;
+        DB.state.customMenus = DB.state.customMenus.filter(m => m.id !== menuId);
+        await DB.save();
+        this.renderCustomMenus();
+        this.notify('تم حذف القائمة');
+      },
+
+      async deleteCustomSubmenu(menuId, childId) {
+        const menu = DB.state.customMenus.find(m => m.id === menuId);
+        if (!menu) return;
+        menu.children = (menu.children || []).filter(c => c.id !== childId);
+        await DB.save();
+        this.renderCustomMenus();
+        this.notify('تم حذف القائمة الفرعية');
+      },
+
+      loadSettingsUI() {
+        const s = DB.state.settings;
+        document.getElementById('set-username').value = s.userName || 'كابتن الباص';
+        document.getElementById('set-currency').value = s.currency;
+        document.getElementById('set-school-salary').value = s.schoolSalary;
+        document.getElementById('set-morning-time').value = s.morningTime;
+        document.getElementById('set-evening-time').value = s.eveningTime;
+        this.renderCustomMenus();
+      },
+
+      async saveSettings() {
+        const s = DB.state.settings;
+        s.userName = document.getElementById('set-username').value.trim() || 'كابتن الباص';
+        s.currency = document.getElementById('set-currency').value.trim() || 'ر.ي';
+        s.schoolSalary = Number(document.getElementById('set-school-salary').value || 0);
+        const currentSchoolSalary = DB.state.transactions.find(t => t.type === 'income' && t.subtype === 'school' && t.monthKey === this.activeMonth);
+        if (currentSchoolSalary?.automaticSalary) currentSchoolSalary.amount = s.schoolSalary;
+        s.morningTime = document.getElementById('set-morning-time').value;
+        s.eveningTime = document.getElementById('set-evening-time').value;
+
+        await DB.save();
+        if ('Notification' in window && Notification.permission === 'default') {
+          await Notification.requestPermission();
+        }
+        this.refreshAll();
+        this.notify('تم الحفظ');
+      },
+
+      startReminders() {
+        setInterval(() => {
+          const now = new Date();
+          const hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+          if (this.lastReminderMin === hm) return;
+          if (hm === DB.state.settings.morningTime || hm === DB.state.settings.eveningTime) {
+            this.lastReminderMin = hm;
+            const msg = hm === DB.state.settings.morningTime ? 'تذكير صباحي: سجل حركة الباص' : 'تذكير مسائي: راجع حسابات اليوم';
+            this.notify(msg);
+            if ('Notification' in window && Notification.permission === 'granted') new Notification('باص مان', { body: msg });
+          }
+        }, 15000);
+      },
+
+      notify(msg, err = false) {
+        const box = document.getElementById('toast-box');
+        box.textContent = msg;
+        box.className = err
+          ? 'fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-rose-600 text-white font-extrabold text-xs shadow-2xl'
+          : 'fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-gradient-to-l from-[#F3D999] to-[#E6C26C] text-[#090A0F] font-extrabold text-xs shadow-2xl';
+        box.classList.remove('hidden');
+        clearTimeout(this._t);
+        this._t = setTimeout(() => box.classList.add('hidden'), 2500);
+      }
+    };
+
+    window.addEventListener('popstate', () => {
+      const modalIds = ['tx-modal', 'confirm-modal', 'name-modal'];
+      for (const id of modalIds) {
+        const modal = document.getElementById(id);
+        if (modal && !modal.classList.contains('hidden')) {
+          modal.classList.add('hidden'); modal.classList.remove('flex');
+          history.pushState({ basman: true }, '', location.href);
+          return;
+        }
+      }
+      const current = document.querySelector('.view-panel.active')?.id?.replace('view-', '') || 'dashboard';
+      if (current !== 'dashboard') {
+        const previous = App.viewStack.length > 1 ? App.viewStack[App.viewStack.length - 2] : 'dashboard';
+        App.navigate(previous, { fromPop: true });
+      } else if (!confirm('هل تريد الخروج من تطبيق باص مان؟')) {
+        history.pushState({ basman: true, view: 'dashboard' }, '', location.href);
+      }
+    });
+    window.addEventListener('DOMContentLoaded', () => App.init());
+  </script>
+</body>
+</html>
